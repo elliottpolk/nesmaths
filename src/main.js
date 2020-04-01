@@ -5,12 +5,12 @@ import router from './router'
 import '@/assets/css/styles.scss'
 import 'nes.css/css/nes.min.css'
 
-import VueAnalytics from 'vue-analytics'
+import VueGtag from 'vue-gtag'
 
 Vue.config.productionTip = false
 
-Vue.use(VueAnalytics, {
-    id: 'UA-139881970-2'
+Vue.use(VueGtag, {
+    config: { id: 'UA-139881970-2' }
 })
 
 new Vue({

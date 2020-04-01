@@ -10,9 +10,9 @@
         </div>
         <div class="space"></div>
 
-        <a href="https://twitter.com/elliottpolk" style="margin-right: 1em;" target="_blank"><i class="nes-icon twitter"></i></a>
-        <a href="https://github.com/elliottpolk" style="margin-right: 1em;" target="_blank"><i class="nes-icon github"></i></a>
-        <a href="https://elliottpolk.dev" target="_blank">elliottpolk.dev</a>
+        <a href="https://twitter.com/elliottpolk" target="_blank"><i class="nes-icon twitter"></i></a>
+        <a href="https://github.com/elliottpolk" target="_blank"><i class="nes-icon github"></i></a>
+        <a href="https://elliottpolk.dev" target="_blank">© 2020 elliottpolk.dev</a>
       </div>
     </div>
   </div>
