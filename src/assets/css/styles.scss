@@ -1,0 +1,130 @@
+@import 'fonts.scss';
+
+html, body, pre, code, kbd, samp {
+  font-family: "Press Start 2P", cursive;
+}
+
+html, body {
+  background: #20262E;
+  padding: 20px;
+}
+
+#app {
+  background: #fff;
+  border-radius: 4px;
+  padding: 20px;
+  transition: all 0.2s;
+}
+
+li {
+  margin: 8px 0;
+}
+
+del {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.padding {
+  padding: 1px 7px 2px;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.flex-end {
+  justify-content: flex-end;
+}
+
+.flex-start {
+  justify-content: flex-start;
+}
+
+.wrapper {
+  width: 100%;
+}
+
+.mt-1 {
+  margin-top: 1em;
+}
+
+.space {
+  flex-grow: 1;
+}
+
+.nes-container {
+  margin-bottom: 3em;
+
+  &.problem {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: row;
+    text-align: center;
+    margin: 1.4em 1.7em auto !important;
+
+    [class*='-sign'] {
+      margin-top: .3em;
+      width: 2em;
+      line-height: 2.9rem;
+    }
+
+    [class*='-number'] {
+      margin-top: .3em;
+      width: 6em; 
+      line-height: 2.9rem;
+    }
+
+    input {
+      text-align: left;
+      width: 8em;
+
+      &::-webkit-outer-spin-button,
+      &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+    }
+  }
+
+  .flex-left {
+    justify-content: flex-start;
+  }
+
+  .nes-select {
+
+    &.mr-1 { 
+      margin-right: 1em; 
+    }
+
+    &.med {
+      width: 8em;
+    }
+
+    &.lrg {
+      width: 20em;
+    }
+  }
+}
+
+.nes-dialog {
+  .error-body {
+    display: flex;
+
+    >div {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .wrapper {
+      margin-top: 1em;
+
+      .dialog-menu {
+        padding-left: 0;
+      }
+    }
+  }
+}

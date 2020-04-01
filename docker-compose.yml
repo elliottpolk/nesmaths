@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+  maths:
+    container_name: nesmaths
+    image: nesmaths:latest
+    restart: unless-stopped
+    networks:
+      - web
+    labels:
+      - traefik.enable=true
+      - traefik.backend=nesmaths
+      - traefik.docker.network=web
+      - traefik.http.routers.nesmaths.rule=Host(`nesmaths.rocketmopp.com`)
+      - traefik.http.routers.nesmaths.tls=true
+      - traefik.http.routers.nesmaths.tls.certresolver=leresolver
+      - traefik.http.services.nesmaths.loadbalancer.server.port=5000
+    expose:
+      - 5000
+
+networks:
+  web:
+    external: true
