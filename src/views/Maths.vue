@@ -1,16 +1,47 @@
 <template>
   <div>
-    <MathsGenerator/>
+    <div class="wrapper flex flex-end" style="border: 4px solid #20262e;">
+      <users></users>
+    </div>
+
+    <div class="main">
+      <b-tabs>
+        <b-tab title="Workbooks" active>
+          <workbooks></workbooks>
+        </b-tab>
+
+        <b-tab title="Flash Cards">
+          <!--flash-cards></flash-cards-->
+        </b-tab>
+      </b-tabs>
+    </div>
   </div>
 </template>
 
 <script>
-import MathsGenerator from '@/components/Maths.vue'
+
+import Users from '@/components/User.vue'
+import Workbooks from '@/components/Workbooks.vue'
+//import FlashCards from '@/components/FlashCards.vue'
 
 export default {
   name: 'Maths',
+
+  data () {
+    return {
+    }
+  },
+
+  created () {
+  },
+
+  methods: {
+  },
+
   components: {
-    MathsGenerator
+    Users,
+    Workbooks,
+    //    FlashCards
   }
 }
 </script>

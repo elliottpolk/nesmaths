@@ -2,12 +2,7 @@
   <div class="footer">
     <div class="nes-container">
       <div class="wrapper flex">
-        <div class="nes-field">
-          <label for="css-link">CSS:</label>
-          <div id="css-link">
-            <a href="https://nostalgic-css.github.io/NES.css/" target="_blank">NES.css</a>
-          </div>
-        </div>
+        CSS: <a href="https://nostalgic-css.github.io/NES.css/" target="_blank">NES.css</a>
         <div class="space"></div>
 
         <a href="https://twitter.com/elliottpolk" target="_blank"><i class="nes-icon twitter"></i></a>
@@ -24,5 +19,10 @@ export default {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
+
+.wrapper {
+  max-height: 4em !important;
+  line-height: 4em;
+}
 </style>
