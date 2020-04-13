@@ -22,6 +22,9 @@ Vue.use(UUID)
 import copy from '@/util/copy.js'
 Vue.use(copy)
 
+import VueCryptoJS from 'vue-cryptojs'
+Vue.use(VueCryptoJS)
+
 new Vue({
   render: h => h(App)
 }).$mount('#app')

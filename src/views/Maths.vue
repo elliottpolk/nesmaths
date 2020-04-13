@@ -6,12 +6,14 @@
 
     <div class="main">
       <b-tabs>
-        <b-tab title="Workbooks" active>
+        <!-- <b-tab title="Workbooks" active> -->
+        <b-tab title="Workbooks">
           <workbooks></workbooks>
         </b-tab>
 
-        <b-tab title="Flash Cards">
-          <!--flash-cards></flash-cards-->
+        <!-- <b-tab title="Flash Cards"> -->
+        <b-tab title="Flash Cards" active>
+          <flash-cards></flash-cards>
         </b-tab>
       </b-tabs>
     </div>
@@ -22,7 +24,7 @@
 
 import Users from '@/components/User.vue'
 import Workbooks from '@/components/Workbooks.vue'
-//import FlashCards from '@/components/FlashCards.vue'
+import FlashCards from '@/components/FlashCards.vue'
 
 export default {
   name: 'Maths',
@@ -41,7 +43,7 @@ export default {
   components: {
     Users,
     Workbooks,
-    //    FlashCards
+    FlashCards
   }
 }
 </script>

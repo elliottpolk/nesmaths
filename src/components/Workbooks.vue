@@ -1,29 +1,48 @@
 <template>
   <div>
-    <game-info
-      :emitter="emitter"
-      :levels="levels"
-      :modes="modes"
-      :score="game.score.correct"
-      :asked="game.score.asked"
-      :totalScore="game.score.totalCorrect"
-      :totalAsked="game.score.totalAsked"
-      :modeSelectSize="'xlrg'"></game-info>
+    <div class="nes-container flex">
+      <div class="wrapper flex flex-end">
+        <div class="nes-field flex-start">
+          <label for="curr-score">SCORE:</label>
+          <div id="curr-score">{{ user.workbook.score.correct }} of {{ user.workbook.score.asked }}</div>
+        </div>
+
+        <div class="space"></div>
+        <div class="nes-field">
+          <label for="overall-score">OVERALL:</label>
+          <div id="overall-score">{{ user.workbook.score.totalCorrect }} of {{ user.workbook.score.totalAsked }}</div>
+        </div>
+
+        <div class="space"></div>
+
+        <div id="level" class="nes-select mr-1 lrg">
+          <select required v-model="level" v-on:change="levelChanged">
+            <option v-for="level in levels" :key="level.value" :value="level.value">{{ level.name }}</option>
+          </select>
+        </div>
+
+        <div id="mode" class="nes-select mr-1 xlrg">
+          <select required v-model="mode" v-on:change="modeChanged">
+            <option v-for="mode in modes" :key="mode.value" :value="mode.value">{{ mode.name }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
 
     <div class="nes-container with-title">
       <h3 class="title">Actions...</h3>
 
       <div class="flex flex-wrap">
         <div id="history" class="nes-select lrg">
-          <select required v-model="game.sheet.id" v-on:change="selectSheet">
-            <option v-for="(s, i) in game.displayable" :key="s.id" :value="s.id">Sheet {{ i + 1 }}</option>
+          <select required v-model="user.workbook.sheet.id" v-on:change="selectSheet">
+            <option v-for="(s, i) in user.workbook.sheets" :key="s.id" :value="s.id">Sheet {{ i + 1 }}</option>
           </select>
         </div>
         <div class="space"></div>
 
-        <button id="check-answers" :class="['nes-btn', { 'is-disabled': game.sheet.checked }]" :disabled="game.sheet.checked" style="margin-right: 1em;" v-on:click="check">Check</button>
-        <button id="more" class="nes-btn" v-on:click="more">New</button>
-        <button id="cheat" style="display: none;" v-on:click="cheat">Cheat</button>
+        <button id="addSheet" class="nes-btn" style="margin-right: 1em;" v-on:click="addSheet">Add Sheet</button>
+        <button id="check-answers" :class="['nes-btn', { 'is-disabled': user.workbook.sheet.checked }]" :disabled="user.workbook.sheet.checked" v-on:click="check">Check</button>
+        <button id="cheat" class="nes-btn" :style="{display: cheatable}" v-on:click="cheat">Cheat</button>
       </div>
     </div>
 
@@ -31,7 +50,7 @@
       <h3 class="title">Worksheet...</h3>
 
       <div class="flex flex-wrap">
-        <div class="nes-container is-rounded problem" v-for="(p, i) in game.sheet.problems" :key="i" :data-solution="p.solution">
+        <div class="nes-container is-rounded problem" v-for="(p, i) in user.workbook.sheet.problems" :key="i" :data-solution="p.solution">
           <div class="left-number">{{ p.top }}</div>
           <div class="operator-sign">{{ p.op }}</div>
           <div class="right-number">{{ p.bottom }}</div>
@@ -46,15 +65,20 @@
 
 <script>
 import { EventBus  } from '@/util/bus.js'
-import GameInfo from '@/components/GameInfo'
 
 const MODE_ADD_SUB = 'as'
 const MODE_MUL_DIV = 'md'
+
+const DEFAULT_LEVEL = 1
+const DEFAULT_MODE = MODE_ADD_SUB
 
 export default {
   data () {
     return {
       emitter: 'workbooks',
+      cheatable: 'none',
+      level: DEFAULT_LEVEL,
+      mode: DEFAULT_MODE,
       levels: [
         {
           name: 'Level 1',
@@ -87,146 +111,74 @@ export default {
           value: MODE_MUL_DIV
         }
       ],
-      game: {
-        level: 1,
-        mode: MODE_ADD_SUB,
-        score: {
-          correct: 0,
-          asked: 0,
-          totalCorrect: 0,
-          totalAsked: 0
+      user: {
+        workbook: {
+          level: DEFAULT_LEVEL,
+          mode: DEFAULT_MODE,
+          score: {
+            correct: 0,
+            asked: 0,
+            totalCorrect: 0,
+            totalAsked: 0
+          },
+          sheet: {
+            id: '',
+            problems: [],
+            checked: false,
+          },
+          sheets: []
         },
-        sheet: {
-          id: '',
-          problems: [],
-          checked: false,
-          level: 1,
-          mode: MODE_ADD_SUB,
-        },
-        displayable: [],
-        sheets: [],
-      },
-      user: {},
+        workbooks: {}
+      }
     }
   },
 
   mounted () {
     EventBus.$on('userSelected', (user) => {
-      //console.debug('[Worksheet] handling user selected: ' + user.name)
-      this.user = user
-      this.changeWorksheets(user.worksheets)
-    }).$on('levelChanged', (event) => {
-      if (event.emitter === undefined || event.emitter === null || event.emitter !== this.emitter)
-        return
-
-      this.levelChange(event.value)
-    }).$on('modeChanged', (event) => {
-      if (event.emitter === undefined || event.emitter === null || event.emitter !== this.emitter)
-        return
-
-      this.modeChange(event.value)
+      this.selectUser(user)
     })
   },
 
   methods: {
 
-    newGame: () => {
-      return {
+    solved: (a, b) => {
+      return Number.parseFloat(a).toFixed(2) === Number.parseFloat(b).toFixed(2)
+    },
+
+    wbId (l, m) {
+      return this.$CryptoJS.MD5('' + l + m).toString()
+    },
+
+    newWorkbook (l, m) {
+      let wb = {
+        level: l,
+        mode: m,
         score: {
           correct: 0,
           asked: 0,
           totalCorrect: 0,
           totalAsked: 0
         },
-        workbook: {
-          sheet: {},
-          level: 1,
-          mode: MODE_ADD_SUB,
-          sheets: []
-        },
-        workbooks: [],
-      }
-    },
-
-    solved: (a, b) => {
-      return Number.parseFloat(a).toFixed(2) === Number.parseFloat(b).toFixed(2)
-    },
-
-    getSheet () {
-      if (this.game.sheets === undefined || this.game.sheets === null)
-        return null
-
-      // reset the displayables
-      console.debug('resetting displayables')
-      this.game.displayable = this.game.sheets.filter(s => { s.level === this.game.level && s.mode === this.game.mode })
-
-      console.debug('finding displayables')
-      return this.game.displayable.find(s => (s.level === this.game.level && s.mode === this.game.mode))
-    },
-
-    levelChange (level) {
-      this.game.level = this.user.worksheets.level = level
-      if (this.sheet !== undefined && this.sheet !== null && this.sheet.level === level && this.sheet.mode == this.game.mode)
-        return
-
-      // check to see if we have a worksheet already for the level and select
-      let sheet = this.getSheet()
-      for (; (sheet === undefined || sheet === null); sheet = this.getSheet())
-        this.generateWorksheet(this.game.level, this.game.mode)
-
-      EventBus.$emit('saveUser', this.user)
-
-      console.debug(sheet)
-
-      console.debug('shite')
-      this.game.sheet = this.$copy(sheet)
-    },
-
-    modeChange (mode) {
-      this.mode = this.user.worksheets.mode = mode
-      if (this.sheet !== undefined && this.sheet !== null && this.sheet.mode === mode)
-        return
-
-      // check to see if we have a worksheet already for the mode and select
-      let sheet = this.getSheet()
-      for(; sheet === null; sheet = this.getSheet())
-        this.generateWorksheet(this.game.level, this.game.mode)
-
-      EventBus.$emit('saveUser', this.user)
-
-      this.game.sheet = this.$copy(sheet)
-      this.game.score = this.score()
-    },
-
-    reset () {
-      this.game = this.newGame()
-    },
-
-    changeWorksheets (worksheets) {
-      if (worksheets === undefined || worksheets === null)
-        this.user.worksheets = worksheets = this.$copy(this.newGame())
-
-      this.reset()
-      if (worksheets.sheets === undefined || worksheets.sheets === null || worksheets.sheets.length < 1) {
-        //console.debug('[Worksheet] generating worksheet for user')
-        this.generateWorksheet(worksheets.level, worksheets.mode)
-
-        // copy over updated worksheets
-        worksheets = this.$copy(this.user.worksheets)
-        EventBus.$emit('saveUser', this.user)
+        sheet: {},
+        sheets: [],
       }
 
-      this.game = this.$copy(worksheets)
+      wb.sheet = this.newSheet(wb.level, wb.mode)
+      wb.sheets.push(this.$copy(wb.sheet))
+      
+      wb.score.totalAsked = wb.score.asked = wb.sheet.problems.length
+
+      return wb
     },
 
-    generateWorksheet (d, m) {
+    newSheet (l, m) {
       var tmin = 1
       var tmax = 20
 
       var lmin = 0
       var lmax = 10
 
-      switch (Number(d)) {
+      switch (Number(l)) {
         case 5:
           tmin = lmin = 1000
           tmax = lmax = 9999
@@ -258,8 +210,7 @@ export default {
       }
 
       let problems = []
-
-      const count = 10
+      let count = 10
 
       let i = 0
       for (i = 0; i < count; i++) {
@@ -269,8 +220,8 @@ export default {
         let p = {
           top: top,
           bottom: bottom,
-          op: (m === 'as') ? '+' : '*',
-          solution: (m === 'as') ? (top + bottom) : (top * bottom),
+          op: (m === MODE_ADD_SUB) ? '+' : '*',
+          solution: (m === MODE_ADD_SUB) ? (top + bottom) : (top * bottom),
           value: 0,
           checked: false
         }
@@ -285,8 +236,8 @@ export default {
         let p = {
           top: top,
           bottom: bottom,
-          op: (m === 'as') ? '-' : '÷',
-          solution: (m === 'as') ? (top - bottom) : (top / bottom),
+          op: (m === MODE_ADD_SUB) ? '-' : '÷',
+          solution: (m === MODE_ADD_SUB) ? (top - bottom) : (top / bottom),
           value: 0,
           checked: false
         }
@@ -294,118 +245,155 @@ export default {
         problems.push(this.$copy(p))
       }
 
-      let sheet = {
+      return {
         id: this.$uuid.v4(),
         problems: this.$copy(problems),
         checked: false,
-        level: this.game.level,
-        mode: this.game.mode
+      }
+    },
+
+    addSheet () {
+      let wb = this.user.workbook
+
+      // generate new sheet
+      let s = this.newSheet(wb.level, wb.mode)
+      wb.sheet = this.$copy(s)
+      wb.sheets.push(this.$copy(s))
+
+      // update scoring
+      wb.score.correct = 0
+      wb.score.asked = s.problems.length
+      wb.score.totalAsked += s.problems.length
+
+      this.user.workbook = this.$copy(wb)
+      this.user.workbooks[this.wbId(wb.level, wb.mode)] = this.$copy(wb)
+      EventBus.$emit('saveUser', this.user)
+
+      this.$nextTick(() => {
+        // sometimes we don't re-render properly, so this should help it along
+        this.$forceUpdate()
+      })
+    },
+
+    selectSheet (event) {
+      let wb = this.user.workbook
+      wb.sheet = this.$copy(wb.sheets.find(s => s.id === event.target.value))
+
+      this.user.workbook = this.$copy(wb)
+      EventBus.$emit('saveUser', this.user)
+
+      this.$nextTick(() => {
+        // sometimes we don't re-render properly, so this should help it along
+        this.$forceUpdate()
+      })
+    },
+
+    selectUser (usr) {
+      if (usr.workbook === undefined || usr.workbook === null) {
+        // this may be an all new user, so ensure the workbooks have a default workbook
+        if (usr.workbooks === undefined || usr.workbooks === null || Object.keys(usr.workbooks).length < 1) {
+          // declare the associate array and populate the first sheet
+          usr.workbooks = {}
+
+          let wb = this.newWorkbook(DEFAULT_LEVEL, DEFAULT_MODE)
+          usr.workbooks[this.wbId(wb.level, wb.mode)] = this.$copy(wb)
+        }
+
+        // grab the workbook with the default value
+        usr.workbook = usr.workbooks[this.wbId(DEFAULT_LEVEL, DEFAULT_MODE)]
+        EventBus.$emit('saveUser', usr)
       }
 
-      // do your null checks
-      if (this.game.sheets === undefined || this.game.sheets === null)
-        this.game.sheets = []
+      this.user = usr
+      this.level = this.user.workbook.level
+      this.mode = this.user.workbook.mode
+    },
 
-      // set as selected sheet and add to the list of sheets
-      this.game.sheet = this.$copy(sheet)
-      this.game.displayable.push(this.$copy(this.game.sheet))
-      this.game.sheets.push(this.$copy(this.game.sheet))
+    selectWorkbook (l, m) {
+      let wbs = this.user.workbooks
 
-      // ensure this gets written back to the user
-      this.user.worksheets.sheet = this.$copy(this.game.sheet)
-      this.user.worksheets.sheets = this.$copy(this.game.sheets)
+      let id = this.wbId(l, m)
+      let wb = wbs[id]
+      if (wb === undefined || wb === null) {
+        wb = this.newWorkbook(l, m)
+        wbs[id] = this.$copy(wb)
+      }
+
+      this.user.workbooks = this.$copy(wbs)
+      this.user.workbook = this.$copy(wb)
+      EventBus.$emit('saveUser', this.user)
+
+      this.$nextTick(() => {
+        // sometimes we don't re-render properly, so this should help it along
+        this.$forceUpdate()
+      })
+    },
+
+    levelChanged (event) {
+      this.selectWorkbook(Number(event.target.value), this.user.workbook.mode)
+    },
+
+    modeChanged (event) {
+      this.selectWorkbook(this.user.workbook.level, event.target.value)
     },
 
     updateProblem (event) {
       let index = event.target.dataset.index
       let value = event.target.value
 
-      this.game.sheet.problems[index].value = value
-      this.game.sheets.find(s => {
-        if (s.id === this.game.sheet.id) {
+      let wb = this.user.workbook
+
+      wb.sheet.problems[index].value = value
+      wb.sheets.find(s => {
+        if (s.id === wb.sheet.id) {
           s.problems[index].value = value
           return
         }
       })
 
-      // ensure the user gets the sheet updates
-      this.user.worksheets.sheet = this.$copy(this.game.sheet)
-      this.user.worksheets.sheets = this.$copy(this.game.sheets)
-
+      this.user.workbook = this.$copy(wb)
       EventBus.$emit('saveUser', this.user)
     },
 
-    score () {
-      let _score = {
+    score (sheet) {
+      let score = {
         correct: 0,
-        asked: this.game.sheet.problems.length,
-        totalCorrect: 0,
-        totalAsked: 0,
+        asked: sheet.problems.length,
       }
 
-      this.game.sheet.problems.forEach(p => {
-        if (p.checked && this.solved(p.solution, p.value) )
-          _score.correct++
+      sheet.problems.forEach(p => {
+        if (this.solved(p.solution, p.value))
+          score.correct++
       })
 
-      //let id = this.game.sheet.id
-      let level = this.game.level
-      let mode = this.game.mode
-
-      this.game.sheets.forEach(s => {
-        if (s.level === level && s.mode === mode) {
-          _score.totalAsked += s.problems.length
-
-          s.problems.forEach(p => {
-            if (p.checked && this.solved(p.solution, p.value))
-              _score.totalCorrect++
-          })
-        }
-      })
-
-      return _score
+      return score
     },
 
     check () {
-      this.game.sheet.checked = true
-      this.game.sheet.problems.forEach(p => p.checked = true)
-      this.game.sheets.find((s, i) => {
-        if (s.id === this.game.sheet.id)
-          this.game.sheets[i] = this.$copy(this.game.sheet)
+      let wb = this.user.workbook
+      let sheet = wb.sheet
+      let score = this.score(sheet)
+
+      wb.score.totalCorrect += wb.score.correct = score.correct
+
+      // ensure sheet and problems are flagged as checked
+      sheet.checked = true
+      sheet.problems.forEach(p => p.checked = true)
+
+      // update sheet in list of sheets
+      wb.sheets.find((s, i) => {
+        if (s.id === sheet.id)
+          wb.sheets[i] = this.$copy(sheet)
       })
 
-      let score = this.score()
-      this.game.score = this.$copy(score)
-
-      this.game.sheets.find((s, i) => {
-        if (s.id === this.game.sheet.id)
-          this.game.sheets[i] = this.$copy(this.game.sheet)
-      })
-
-      this.user.worksheets = this.$copy(this.game)
+      this.user.workbooks[this.wbId(wb.level, wb.mode)] = this.$copy(wb)
+      this.user.workbook = this.$copy(wb)
       EventBus.$emit('saveUser', this.user)
     },
 
-    selectSheet (event) {
-      this.game.sheet = this.$copy(this.game.sheets.find(s => s.id === event.target.value))
-      this.game.score = this.score()
-
-      this.user.worksheets = this.$copy(this.game)
-      EventBus.$emit('saveUser', this.user)
-    },
-
-    more () {
-      this.generateWorksheet(this.game.level, this.game.mode)
-      EventBus.$emit('saveUser', this.user)
-    },
-
-    cheat() {
-      this.game.sheet.problems.forEach(p => p.value = p.solution)
+    cheat () {
+      this.user.workbook.sheet.problems.forEach(p => p.value = p.solution)
     }
-  },
-
-  components: {
-    'game-info': GameInfo
   }
 }
 </script>
