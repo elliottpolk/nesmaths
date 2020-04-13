@@ -6,13 +6,13 @@
 
     <div class="main">
       <b-tabs>
-        <!-- <b-tab title="Workbooks" active> -->
-        <b-tab title="Workbooks">
+        <b-tab title="Workbooks" active>
+        <!-- <b-tab title="Workbooks"> -->
           <workbooks></workbooks>
         </b-tab>
 
-        <!-- <b-tab title="Flash Cards"> -->
-        <b-tab title="Flash Cards" active>
+        <b-tab title="Flash Cards">
+        <!-- <b-tab title="Flash Cards" active> -->
           <flash-cards></flash-cards>
         </b-tab>
       </b-tabs>
