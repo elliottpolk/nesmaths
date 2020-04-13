@@ -215,22 +215,27 @@ export default {
       switch (m) {
         case MODE_DIV:
           p.op = '÷'
-          p.solution = p.top / p.bottom
+
+          // disallow divide by zero
+          while (p.bottom === 0)
+            p.bottom = Math.floor(Math.random() * (lmax - lmin)) + lmin
+
+          p.solution = Number.parseFloat(p.top / p.bottom).toFixed(2)
           break
 
         case MODE_MUL:
           p.op = '*'
-          p.solution = p.top * p.bottom
+          p.solution = Number.parseFloat(p.top * p.bottom).toFixed(2)
           break
 
         case MODE_SUB:
           p.op = '-'
-          p.solution = p.top - p.bottom
+          p.solution = Number.parseFloat(p.top - p.bottom).toFixed(2)
           break
 
         default:
           p.op = '+'
-          p.solution = p.top + p.bottom
+          p.solution = Number.parseFloat(p.top + p.bottom).toFixed(2)
       }
 
       return p

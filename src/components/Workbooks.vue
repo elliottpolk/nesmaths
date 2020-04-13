@@ -221,7 +221,7 @@ export default {
           top: top,
           bottom: bottom,
           op: (m === MODE_ADD_SUB) ? '+' : '*',
-          solution: (m === MODE_ADD_SUB) ? (top + bottom) : (top * bottom),
+          solution: Number.parseFloat((m === MODE_ADD_SUB) ? (top + bottom) : (top * bottom)).toFixed(2),
           value: 0,
           checked: false
         }
@@ -231,13 +231,18 @@ export default {
 
       for (i = 0; i < count; i++) {
         let top = Math.floor(Math.random() * (tmax - tmin)) + tmin
-        let bottom = Math.floor(Math.random() * (lmax - lmin)) + lmin
+
+        // disallow divide by zero
+        var bottom = 0
+        do {
+          bottom = Math.floor(Math.random() * (lmax - lmin)) + lmin
+        } while (bottom === 0 && m === MODE_MUL_DIV)
 
         let p = {
           top: top,
           bottom: bottom,
           op: (m === MODE_ADD_SUB) ? '-' : '÷',
-          solution: (m === MODE_ADD_SUB) ? (top - bottom) : (top / bottom),
+          solution: Number.parseFloat((m === MODE_ADD_SUB) ? (top - bottom) : (top / bottom)).toFixed(2),
           value: 0,
           checked: false
         }
